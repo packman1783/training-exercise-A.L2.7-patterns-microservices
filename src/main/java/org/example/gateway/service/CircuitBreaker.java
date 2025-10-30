@@ -8,8 +8,13 @@ import org.springframework.web.client.RestTemplate;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 @Service
 public class CircuitBreaker {
+    private final static Logger log = LoggerFactory.getLogger(CircuitBreaker.class);
+
     private final RestTemplate restTemplate = new RestTemplate();
     private final ConcurrentHashMap<String, AtomicInteger> failures = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, Long> openUntil = new ConcurrentHashMap<>();
@@ -18,32 +23,40 @@ public class CircuitBreaker {
 
     public String get(String url, String fallback) {
         if (isOpen(url)) {
-            System.out.println("[CIRCUIT OPEN] Skipping GET " + url);
+            log.warn("[CIRCUIT OPEN] Skipping GET {}", url);
+
             return fallback;
         }
 
         try {
             String result = restTemplate.getForObject(url, String.class);
             resetFailures(url);
+            log.info("[SUCCESS] GET {}", url);
+
             return result;
         } catch (RestClientException e) {
             registerFailure(url, e);
+
             return fallback;
         }
     }
 
     public String post(String url, Object body, String fallback) {
         if (isOpen(url)) {
-            System.out.println("[CIRCUIT OPEN] Skipping POST " + url);
+            log.warn("[CIRCUIT OPEN] Skipping POST {}", url);
+
             return fallback;
         }
 
         try {
             ResponseEntity<String> response = restTemplate.postForEntity(url, body, String.class);
             resetFailures(url);
+            log.info("[SUCCESS] POST {}", url);
+
             return response.getBody();
         } catch (RestClientException e) {
             registerFailure(url, e);
+
             return fallback;
         }
     }
@@ -56,7 +69,8 @@ public class CircuitBreaker {
         if (System.currentTimeMillis() > until) {
             openUntil.remove(url);
             failures.put(url, new AtomicInteger(0));
-            System.out.println("[CIRCUIT RESET] " + url);
+            log.info("[CIRCUIT RESET] {}", url);
+
             return false;
         }
         return true;
@@ -66,11 +80,11 @@ public class CircuitBreaker {
         failures.putIfAbsent(url, new AtomicInteger(0));
 
         int count = failures.get(url).incrementAndGet();
-        System.out.printf("[FAILURE] %s (count=%d): %s%n", url, count, e.getMessage());
+        log.error("[FAILURE] {} (count={}): {}", url, count, e.getMessage());
 
         if (count >= failureThreshold) {
             openUntil.put(url, System.currentTimeMillis() + resetTimeMs);
-            System.out.println("[CIRCUIT OPENED] for " + url);
+            log.warn("[CIRCUIT OPENED] for {}", url);
         }
     }
 
