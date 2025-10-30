@@ -15,10 +15,11 @@ A POST /api/notifications request is routed to the NotificationService → http:
 Check the operation:
 ```
 curl http://localhost:8082/api/users/1
-curl -X POST http://localhost:8082/api/notifications -d '{"text1": "text2"}' -H "Content-Type: application/json"
+curl -X POST http://localhost:8082/api/notifications -d 'user1:{"operation":"USER_CREATED","email":"user@example.com"}' -H "Content-Type: application/json"
 ```
 
 Thanks to this project it was possible to learn:  
 
 - work with REST API
 - Spring Boot
+- logger
