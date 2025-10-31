@@ -5,10 +5,13 @@ import java.util.Map;
 import org.example.gateway.service.CircuitBreaker;
 import org.example.gateway.service.ServiceDiscovery;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -36,8 +39,41 @@ public class GatewayController {
 
         String response = circuitBreaker.get(url, "{\"error\":\"User service unavailable\"}");
 
-        log.info("<- Response from UserService: {}", response);
+        log.info("<- Response from UserService getUser: {}", response);
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/users")
+    public ResponseEntity<String> createUser(@RequestBody Map<String, Object> body) {
+        String url = serviceDiscovery.getServiceInstance("user-service") + "/users";
+        log.info("-> Forwarding POST request to UserService: {}", url);
+
+        String response = circuitBreaker.post(url, body, "{\"error\":\"User service unavailable\"}");
+
+        log.info("<- Response from UserService createUser: {}", response);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @PutMapping("/users/{id}")
+    public ResponseEntity<String> updateUser(@RequestBody Map<String, Object> body, @PathVariable String id) {
+        String url = serviceDiscovery.getServiceInstance("user-service") + "/users/" + id;
+        log.info("-> Forwarding PUT request to UserService: {}", url);
+
+        String response = circuitBreaker.post(url, body, "{\"error\":\"User service unavailable\"}");
+
+        log.info("<- Response from UserService updateUser: {}", response);
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/users/{id}")
+    public ResponseEntity<String> deleteUser(@PathVariable String id) {
+        String url = serviceDiscovery.getServiceInstance("user-service") + "/users/" + id;
+        log.info("-> Forwarding DELETE request to UserService deleteUser: {}", url);
+
+        String response = circuitBreaker.delete(url, "{\"error\":\"User service unavailable\"}");
+
+        log.info("<- Response from UserService: {}", response);
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/notification")

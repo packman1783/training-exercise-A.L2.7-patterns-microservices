@@ -61,6 +61,26 @@ public class CircuitBreaker {
         }
     }
 
+    public String delete(String url, String fallback) {
+        if (isOpen(url)) {
+            log.warn("[CIRCUIT OPEN] Skipping DELETE {}", url);
+
+            return fallback;
+        }
+
+        try {
+            restTemplate.delete(url);
+            resetFailures(url);
+            log.info("[SUCCESS] DELETE {}", url);
+
+            return "{\"status\":\"deleted\"}";
+        } catch (RestClientException e) {
+            registerFailure(url, e);
+
+            return fallback;
+        }
+    }
+
     private boolean isOpen(String url) {
         Long until = openUntil.get(url);
 
