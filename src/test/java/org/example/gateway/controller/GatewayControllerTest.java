@@ -16,8 +16,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 
 @WebMvcTest(GatewayController.class)
 class GatewayControllerTest {
@@ -39,9 +41,11 @@ class GatewayControllerTest {
 
     @Test
     void shouldReturnUserResponse() throws Exception {
-        when(breaker.get(anyString(), anyString())).thenReturn("{\"name\":\"Alice\"}");
+        when(breaker.get(anyString(), anyString()))
+                .thenReturn("{\"name\":\"Alice\"}");
 
-        mockMvc.perform(get("/api/users/1"))
+        mockMvc.perform(get("/api/users/1")
+                        .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(content().json("{\"name\":\"Alice\"}"));
     }
@@ -56,5 +60,17 @@ class GatewayControllerTest {
                         .content("{\"msg\":\"hi\"}"))
                 .andExpect(status().isOk())
                 .andExpect(content().json("{\"error\":\"Notification service unavailable\"}"));
+    }
+
+    @Test
+    void shouldCreateUser() throws Exception {
+        when(breaker.post(anyString(), any(), anyString()))
+                .thenReturn("{\"id\":1,\"name\":\"Bob\"}");
+
+        mockMvc.perform(post("/api/users")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Bob\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(content().json("{\"id\":1,\"name\":\"Bob\"}"));
     }
 }

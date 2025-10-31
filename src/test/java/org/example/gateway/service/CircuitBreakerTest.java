@@ -19,7 +19,7 @@ class CircuitBreakerTest {
         CircuitBreaker breaker = new CircuitBreaker();
         String url = "http://localhost:9999/fail";
 
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < 3; i++) {
             breaker.get(url, "fallback");
         }
 

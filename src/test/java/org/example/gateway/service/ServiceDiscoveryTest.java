@@ -20,12 +20,13 @@ class ServiceDiscoveryTest {
     }
 
     @Test
-    void shouldReturnNullForUnknownService() {
+    void shouldThrowExceptionForUnknownService() {
         ExternalConfiguration config = new ExternalConfiguration();
         config.setServices(Map.of("user-service", "http://localhost:8080"));
 
         ServiceDiscovery discovery = new ServiceDiscovery(config);
 
-        assertNull(discovery.getServiceInstance("notification-service"));
+        assertThrows(IllegalArgumentException.class,
+                () -> discovery.getServiceInstance("notification-service"));
     }
 }
