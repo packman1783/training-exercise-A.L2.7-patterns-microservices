@@ -25,7 +25,7 @@ public class ServiceDiscovery {
         String url = services.get(serviceName);
 
         if(url == null) {
-            log.error("NService not found: {}", serviceName);
+            log.error("Service not found: {}", serviceName);
             throw new IllegalArgumentException("Service not found: " + serviceName);
         }
 
